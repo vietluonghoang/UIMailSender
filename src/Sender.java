@@ -1,4 +1,8 @@
 import java.io.FileNotFoundException;
+import java.sql.Driver;
+import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import entities.Recipient;
 import exceltool.WorkingWithExcel;
@@ -7,14 +11,15 @@ import sender.MailSender;
 public class Sender {
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
 
-		String senderEmail = "";
-		String senderPassword = "";
+		String senderEmail = "sgsvn1@gmail.com";
+		String senderPassword = "Play2Win";
 
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
 		String logFileName = "sentEmailLog.txt";
 
-		String subject = "Cheap Outsource Testing Service";
+		String subject = "This is test email";
+//		String subject = "Cheap Outsource Testing Service";
 		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other software. <br><br>"
 				+ "Our team have the ability to perform <b>full range testing</b> on all major mobile devices, web browsers and OSs, including iOS, Android, Windows, Mac, and Linux.<br><br>"
 				+ "Our team is <b>well trained by Silicon Valley testing experts and all are good in English communicating.</b> "
@@ -36,33 +41,48 @@ public class Sender {
 				+ "</span></p><p dir=\"ltr\" style=\"font-family:Arial,Helvetica,sans-serif;font-size:12.8px;line-height:1.2;margin-top:0pt;margin-bottom:0pt;text-align:justify\"><span style=\"font-size:8pt;font-family:Arial;vertical-align:baseline;white-space:pre-wrap\">"
 				+ "The information contained in this electronic mail message (including attachments) is privileged and confidential information intended solely for the use of Individual or Entity named above. If the reader of this message is not the intended recipient, you are hereby notified that you have received this message in error and that any retention, review, use, dissemination or copying of this communication or the information it contains is strictly prohibited. "
 				+ "If you have received this communication in error, please immediately notify the sender by return e-mail, and delete the original message and all copies from your system. Thank you.</span></p></div></div></div></div>";
-		
-		String pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
-		
+
+		String pathToChromeDriverExecutableFile = "./drivers/chromedriver";
+
 		MailSender sender = new MailSender(pathToChromeDriverExecutableFile);
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
 		try {
 			sender.loginEmail(senderEmail, senderPassword);
+
 			int counter = 0;
-			for (Recipient recipient : excel.getRecipientInfo()) {
-				String editedContent = "Hi " + recipient.getRecipientName().trim() + ",<br><br>" + content;
-				sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(), subject.trim(), editedContent.trim());
-				sender.sendMail();
-				sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(), logFileName);
-				
-				counter++;
-				System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
-				
-				Thread.sleep(60000);
+			ArrayList<Recipient> recipients = excel.getRecipientInfo();
+			for (int i = 0; i < 20; i++) {
+				for (Recipient recipient : recipients) {
+					try {
+						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+								subject.trim(), content.trim());
+					} catch (Exception e) {
+						// TODO: handle exception
+						sender.captureScreen();
+						System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
+						Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
+						sender.resetBrowser();
+						System.out.println("Retrying......");
+						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+								subject.trim(), content.trim());
+					}
+					sender.sendMail();
+					sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(),
+							logFileName);
+
+					counter++;
+					System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
+					Thread.sleep(60000);
+				}
 			}
-			
 			System.out.println("======= All done =======");
 			sender.quitDriver();
 
 		} catch (Exception e) {
 			// TODO: handle exception
 			System.out.println(e.getMessage() + "\n" + e.getStackTrace());
+			Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, e);
 //			sender.quitDriver();
 		}
 	}

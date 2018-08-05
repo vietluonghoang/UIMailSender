@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -25,6 +26,8 @@ import entities.Recipient;
 public class WorkingWithExcel {
 	private XSSFWorkbook workbook;
 	private HashMap<String, String> recipientInfo;
+	private ArrayList<Recipient> recipients;
+	
 
 	public WorkingWithExcel(String fileName, String sheetName) {
 		dataBinding(fileName, sheetName);
@@ -33,6 +36,7 @@ public class WorkingWithExcel {
 	private void dataBinding(String fileName, String sheetName) {
 		// SendColdEmailTest3.xlsx
 		recipientInfo = new HashMap<>();
+		recipients = new ArrayList<>();
 		String excelFile = System.getProperty("user.dir") + "/data/" + fileName;
 
 		// contains all excel data in table
@@ -40,17 +44,21 @@ public class WorkingWithExcel {
 		for (int index = 0; index < dataTable.getRowCount(); index++) {
 			String firstName = getValue("First Name", index, dataTable);
 			String email = getValue("Email Address", index, dataTable);
-			recipientInfo.put(email, firstName);
+			if(!isEmailExisted(email)) {
+				recipients.add(new Recipient(email, firstName));
+				recipientInfo.put(email, firstName);
+			}
 		}
+	}
+	
+	private boolean isEmailExisted(String email) {
+		if(recipientInfo.get(email) == null) {
+			return false;
+		}
+		return true;
 	}
 
 	public ArrayList<Recipient> getRecipientInfo() {
-		ArrayList<Recipient> recipients = new ArrayList<>();
-
-		for (String emailAddress : recipientInfo.keySet()) {
-			recipients.add(new Recipient(emailAddress, recipientInfo.get(emailAddress)));
-		}
-
 		return recipients;
 	}
 

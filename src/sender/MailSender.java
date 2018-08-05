@@ -4,10 +4,15 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
+import org.openqa.selenium.OutputType;
+import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -15,10 +20,15 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import exceltool.WorkingWithExcel;
+
 public class MailSender {
 	private WebDriver driver = null;
 	private WebDriverWait wait = null;
-	
+	private String pathToChromeDriverExecutableFile = "";
+	private String email = "";
+	private String password = "";
+
 	private String xpathToComposeButton = "//div[text() = 'COMPOSE' and @role = 'button']";
 	private String xpathToComposeDialog = "//div[@class = 'dw']//div[@class = 'nH nn']//div[@class = 'nH Hd' and @role = 'dialog']";
 	private String xpathToRecipientsField = xpathToComposeDialog + "//textarea[@name = 'to']";
@@ -27,47 +37,75 @@ public class MailSender {
 	private String xpathToSubjectField = "//input[@name = 'subjectbox']";
 	private String xpathToMessageBody = "//div[@aria-label='Message Body']";
 	private String xpathToSendButton = "//div[@role = 'button' and text() = 'Send']";
+	private String xpathToTryNewEmailPopup = "//body/div/div/div[text() = 'Try the new Gmail']";
+	private String xpathToTryNewEmailPopupCloseButton = "//body/div/div/div/button[@aria-label = 'Close']";
 
 	public MailSender(String pathToChromeDriverExecutableFile) {
+		this.pathToChromeDriverExecutableFile = pathToChromeDriverExecutableFile;
 		initDriver(pathToChromeDriverExecutableFile);
 	}
 
 	public void initDriver(String pathToChromeDriverExecutableFile) {
 		System.setProperty("webdriver.chrome.driver", pathToChromeDriverExecutableFile);
 		ChromeOptions options = new ChromeOptions();
+		options.addArguments("--disable-browser-side-navigation");
+		options.addArguments("--disable-gpu");
 		driver = new ChromeDriver(options);
-		wait = new WebDriverWait(driver, 30);
+		wait = new WebDriverWait(driver, 10);
 	}
 
 	public void fillEmail(String emailAddress, String recipientName, String subject, String content)
 			throws InterruptedException {
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpathToComposeButton)));
+		String editedContent = "Hi " + recipientName.trim() + ",<br><br>" + content;
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
 		driver.findElement(By.xpath(xpathToComposeButton)).click();
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath(xpathToComposeDialog)));
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeDialog)));
 		driver.findElement(By.xpath(xpathToRecipientsField)).sendKeys(emailAddress);
 		for (WebElement autoCompleteElement : driver.findElements(By.xpath(xpathToRecipientsAutocomplete))) {
 			driver.findElement(By.xpath(xpathToRecipientsField)).sendKeys(Keys.ENTER);
 		}
-		driver.findElement(By.xpath(xpathToSubjectField)).click();
+		try {
+			wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSubjectField)));
+			driver.findElement(By.xpath(xpathToSubjectField)).click();
+		} catch (Exception ex) {
+			System.out.println("----------\nError: \n" + ex.getMessage() + "\n" + ex.getStackTrace() + "\n--\n");
+			Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, ex);
+			System.out.println("\n----------\n\nFalling back 1 step \n........\n");
+			driver.findElement(By.xpath(xpathToRecipientsField)).sendKeys(Keys.ENTER);
+			wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSubjectField)));
+			driver.findElement(By.xpath(xpathToSubjectField)).click();
+			System.out.println("\n---------------");
+		}
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSubjectField)));
 		driver.findElement(By.xpath(xpathToSubjectField)).sendKeys(subject);
-		driver.findElement(By.xpath(xpathToMessageBody)).sendKeys(content);
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToMessageBody)));
+		driver.findElement(By.xpath(xpathToMessageBody)).click();
 
-		// String script = "alert(document.cookie);";
-		// jsExecutor(script);
-		jsExecutor(injectEmailContentScript(content));
+		jsExecutor(injectEmailContentScript(editedContent));
 	}
 
 	public void loginEmail(String email, String password) {
+		this.email = email;
+		this.password = password;
+
 		driver.navigate().to("https://mail.google.com/");
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input [@type='email']")));
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type='email']")));
 		driver.findElement(By.xpath("//input [@type='email']")).sendKeys(email);
-		driver.findElement(By.xpath("//div[@id='identifierNext' or @id = 'next']")).click();
-		wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//input [@type = 'password']")));
+		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='identifierNext' or @id = 'next')]"))
+				.click();
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type = 'password']")));
 		driver.findElement(By.xpath("//input [@type = 'password']")).sendKeys(password);
 		driver.findElement(By.xpath("//div[@id='passwordNext']")).click();
+
+		for (WebElement tryNewPopup : driver.findElements(By.xpath(xpathToTryNewEmailPopup))) {
+			System.out.println("Try New Popup found!!");
+			driver.findElement(By.xpath(xpathToTryNewEmailPopupCloseButton)).click();
+			;
+		}
 	}
 
 	public void sendMail() {
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSendButton)));
 		driver.findElement(By.xpath(xpathToSendButton)).click();
 	}
 
@@ -113,6 +151,7 @@ public class MailSender {
 
 		} catch (IOException e) {
 			e.printStackTrace();
+			Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
 		} finally {
 			try {
 				if (bw != null) {
@@ -123,8 +162,30 @@ public class MailSender {
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();
+				Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, ex);
 			}
 		}
 
+	}
+
+	public String captureScreen() {
+		String path = "";
+		try {
+			File source = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+			path = System.getProperty("user.dir") + "/screenshots/" + source.getName();
+			FileUtils.copyFile(source, new File(path));
+			FileUtils.forceDelete(source);
+		} catch (IOException e) {
+			System.out.println("\n===========\nFailed to capture screenshot \n " + e.getMessage() + "\n"
+					+ e.getStackTrace() + "\n===============");
+			Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
+		}
+		return path;
+	}
+
+	public void resetBrowser() {
+		driver.quit();
+		initDriver(pathToChromeDriverExecutableFile);
+		loginEmail(email, password);
 	}
 }
