@@ -44,6 +44,10 @@ public class Sender {
 
 		String pathToChromeDriverExecutableFile = "./drivers/chromedriver";
 
+		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
+		}
+		
 		MailSender sender = new MailSender(pathToChromeDriverExecutableFile);
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
