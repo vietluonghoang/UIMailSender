@@ -57,16 +57,32 @@ public class MailSender {
 	public void fillEmail(String emailAddress, String recipientName, String subject, String content)
 			throws InterruptedException {
 		String editedContent = "Hi " + recipientName.trim() + ",<br><br>" + content;
+		System.out.print("\n---- Waiting for Compose button........");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
+		System.out.println("found.\n");
+		System.out.print("\n---- Clicking Compose button........");
 		driver.findElement(By.xpath(xpathToComposeButton)).click();
+		System.out.println("clicked.\n");
+		System.out.print("\n---- Waiting for Compose dialog........");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeDialog)));
+		System.out.println("found.\n");
+		System.out.print("\n---- Sending keys to Email field........");
 		driver.findElement(By.xpath(xpathToRecipientsField)).sendKeys(emailAddress);
+		System.out.println("done.\n");
+		System.out.print("\n---- Waiting for Auto-complete........");
 		for (WebElement autoCompleteElement : driver.findElements(By.xpath(xpathToRecipientsAutocomplete))) {
+			System.out.println("found.\n");
+			System.out.print("\n---- Sending Enter key........");
 			driver.findElement(By.xpath(xpathToRecipientsField)).sendKeys(Keys.ENTER);
+			System.out.println("done.\n");
 		}
 		try {
+			System.out.print("\n---- Waiting for Subject field........");
 			wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSubjectField)));
+			System.out.println("found.\n");
+			System.out.print("\n---- Clicking on Subject field........");
 			driver.findElement(By.xpath(xpathToSubjectField)).click();
+			System.out.println("done.\n");
 		} catch (Exception ex) {
 			System.out.println("----------\nError: \n" + ex.getMessage() + "\n" + ex.getStackTrace() + "\n--\n");
 			Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, ex);
@@ -76,12 +92,22 @@ public class MailSender {
 			driver.findElement(By.xpath(xpathToSubjectField)).click();
 			System.out.println("\n---------------");
 		}
+		System.out.print("\n---- Waiting for Subject field........");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToSubjectField)));
+		System.out.println("found.\n");
+		System.out.print("\n---- Sending keys to Subject field........");
 		driver.findElement(By.xpath(xpathToSubjectField)).sendKeys(subject);
+		System.out.println("done.\n");
+		System.out.print("\n---- Waiting for Message body........");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToMessageBody)));
+		System.out.println("found.\n");
+		System.out.print("\n---- Clicking on Message body........");
 		driver.findElement(By.xpath(xpathToMessageBody)).click();
+		System.out.println("done.\n");
 
+		System.out.print("\n---- Injecting message........");
 		jsExecutor(injectEmailContentScript(editedContent));
+		System.out.println("done.\n");
 	}
 
 	public void loginEmail(String email, String password) {
@@ -95,7 +121,7 @@ public class MailSender {
 				.click();
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type = 'password']")));
 		driver.findElement(By.xpath("//input [@type = 'password']")).sendKeys(password);
-		driver.findElement(By.xpath("//div[@id='passwordNext']")).click();
+		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='passwordNext' or @id = 'signIn')]")).click();
 
 		for (WebElement tryNewPopup : driver.findElements(By.xpath(xpathToTryNewEmailPopup))) {
 			System.out.println("Try New Popup found!!");

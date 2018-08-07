@@ -1,6 +1,7 @@
 import java.io.FileNotFoundException;
 import java.sql.Driver;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,6 +18,8 @@ public class Sender {
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
 		String logFileName = "sentEmailLog.txt";
+
+		int interval = 10000;
 
 		String subject = "This is test email";
 //		String subject = "Cheap Outsource Testing Service";
@@ -44,6 +47,10 @@ public class Sender {
 
 		String pathToChromeDriverExecutableFile = "./drivers/chromedriver";
 
+		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
+		}
+
 		MailSender sender = new MailSender(pathToChromeDriverExecutableFile);
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
@@ -55,25 +62,34 @@ public class Sender {
 			for (int i = 0; i < 20; i++) {
 				for (Recipient recipient : recipients) {
 					try {
+						System.out.println(
+								"\n=================================\n Sending to " + recipient.getEmailAddress());
 						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
 								subject.trim(), content.trim());
 					} catch (Exception e) {
 						// TODO: handle exception
 						sender.captureScreen();
-						System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
+						System.out
+								.println("\n==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
 						Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
 						sender.resetBrowser();
-						System.out.println("Retrying......");
+						System.out.println("\n################### Retrying......\n");
 						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
 								subject.trim(), content.trim());
 					}
+					System.out.print("\n------ Sending......");
 					sender.sendMail();
+					System.out.println("Sent ------\n");
 					sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(),
 							logFileName);
 
 					counter++;
-					System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
-					Thread.sleep(60000);
+					System.out.println("\n-----\n" + counter + ". Sent: " + recipient.getEmailAddress().trim()
+							+ "\n============================\n");
+
+					System.out.print("\n------ Sleeping for " + interval + "......");
+					Thread.sleep(interval);
+					System.out.println("done.\n");
 				}
 			}
 			System.out.println("======= All done =======");
