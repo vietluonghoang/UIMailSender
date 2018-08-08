@@ -122,12 +122,16 @@ public class MailSender {
 	}
 
 	private String injectEmailContentScript(String content) {
+		String escapedContent = content.replace("'", "&#39;");
+		
 		return "function FindByAttributeValue(attribute, value, element_type)    {"
 				+ "  element_type = element_type || \"*\";" + "  var All = document.getElementsByTagName(element_type);"
 				+ "  for (var i = 0; i < All.length; i++)       {"
 				+ "    if (All[i].getAttribute(attribute) == value) { return All[i]; }" + "  }" + "}"
-				+ "FindByAttributeValue('aria-label','Message Body','div').innerHTML = '" + content + "'";
+				+ "FindByAttributeValue('aria-label','Message Body','div').innerHTML = '" + escapedContent + "'";
 	}
+	
+	
 
 	public void writeLogSentEmail(String firstName, String email, String logFileName) {
 
