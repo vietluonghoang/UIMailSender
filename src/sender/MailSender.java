@@ -39,6 +39,8 @@ public class MailSender {
 	private String xpathToSendButton = "//div[@role = 'button' and text() = 'Send']";
 	private String xpathToTryNewEmailPopup = "//body/div/div/div[text() = 'Try the new Gmail']";
 	private String xpathToTryNewEmailPopupCloseButton = "//body/div/div/div/button[@aria-label = 'Close']";
+	private String xpathToErrorPopup = "//div[@role = 'alertdialog']";
+	private String xpathToErrorPopupHeader = xpathToErrorPopup + "/div/span[text() = 'Error' and @role = 'heading']";
 
 	public MailSender(String pathToChromeDriverExecutableFile) {
 		this.pathToChromeDriverExecutableFile = pathToChromeDriverExecutableFile;
@@ -55,7 +57,10 @@ public class MailSender {
 	}
 
 	public void fillEmail(String emailAddress, String recipientName, String subject, String content)
-			throws InterruptedException {
+			throws InterruptedException, Exception {
+		for (WebElement errorPopup : driver.findElements(By.xpath(xpathToErrorPopupHeader))) {
+			throw new Exception("\n=======\nThere is an error!\n" + driver.findElement(By.xpath(xpathToErrorPopup)).getText() + "\n===========\n");
+		}
 		String editedContent = "Hi " + recipientName.trim() + ",<br><br>" + content;
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
 		driver.findElement(By.xpath(xpathToComposeButton)).click();

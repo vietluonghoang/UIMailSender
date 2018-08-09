@@ -18,6 +18,8 @@ public class Sender {
 		String sheetName = "SendColdEmail";
 		String logFileName = "sentEmailLog.txt";
 
+		int interval = 30000;
+
 		String subject = "This is test email";
 //		String subject = "Cheap Outsource Testing Service";
 		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other software. <br><br>"
@@ -47,7 +49,7 @@ public class Sender {
 		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
 			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
 		}
-		
+
 		MailSender sender = new MailSender(pathToChromeDriverExecutableFile);
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
@@ -56,29 +58,28 @@ public class Sender {
 
 			int counter = 0;
 			ArrayList<Recipient> recipients = excel.getRecipientInfo();
-			for (int i = 0; i < 20; i++) {
-				for (Recipient recipient : recipients) {
-					try {
-						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
-								subject.trim(), content.trim());
-					} catch (Exception e) {
-						// TODO: handle exception
-						sender.captureScreen();
-						System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
-						Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
-						sender.resetBrowser();
-						System.out.println("Retrying......");
-						sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
-								subject.trim(), content.trim());
-					}
-					sender.sendMail();
-					sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(),
-							logFileName);
-
-					counter++;
-					System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
-					Thread.sleep(60000);
+			for (Recipient recipient : recipients) {
+				
+				try {
+					sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+							subject.trim(), content.trim());
+				} catch (Exception e) {
+					// TODO: handle exception
+					sender.captureScreen();
+					System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
+					Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
+					sender.resetBrowser();
+					System.out.println("Retrying......");
+					sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+							subject.trim(), content.trim());
 				}
+				sender.sendMail();
+				sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(),
+						logFileName);
+
+				counter++;
+				System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
+				Thread.sleep(interval);
 			}
 			System.out.println("======= All done =======");
 			sender.quitDriver();
