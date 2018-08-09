@@ -140,7 +140,7 @@ public class MailSender {
 
 	public void writeLogSentEmail(String firstName, String email, String logFileName) {
 
-		String logFile = System.getProperty("user.dir") + "/data/" + logFileName;
+		String logFile = System.getProperty("user.dir") + "/data/Log/" + logFileName;
 
 		BufferedWriter bw = null;
 		FileWriter fw = null;

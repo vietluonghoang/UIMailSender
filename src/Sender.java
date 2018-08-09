@@ -16,7 +16,7 @@ public class Sender {
 
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
-		String logFileName = "sentEmailLog.txt";
+		String logFileName = recipientListFileName.replace(".xlsx", "") + "-" + sheetName + ".txt";
 
 		int interval = 30000;
 
@@ -59,13 +59,16 @@ public class Sender {
 			int counter = 0;
 			ArrayList<Recipient> recipients = excel.getRecipientInfo();
 			for (Recipient recipient : recipients) {
-				
+
 				try {
 					sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
 							subject.trim(), content.trim());
 				} catch (Exception e) {
 					// TODO: handle exception
 					sender.captureScreen();
+					if (e.getMessage().contains("reached a limit")) {
+						throw e;
+					}
 					System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
 					Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
 					sender.resetBrowser();
