@@ -4,6 +4,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,7 +61,8 @@ public class MailSender {
 	public void fillEmail(String emailAddress, String recipientName, String subject, String content)
 			throws InterruptedException, Exception {
 		for (WebElement errorPopup : driver.findElements(By.xpath(xpathToErrorPopupHeader))) {
-			throw new Exception("\n=======\nThere is an error!\n" + driver.findElement(By.xpath(xpathToErrorPopup)).getText() + "\n===========\n");
+			throw new Exception("\n=======\nThere is an error!\n"
+					+ driver.findElement(By.xpath(xpathToErrorPopup)).getText() + "\n===========\n");
 		}
 		String editedContent = "Hi " + recipientName.trim() + ",<br><br>" + content;
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
@@ -128,15 +131,13 @@ public class MailSender {
 
 	private String injectEmailContentScript(String content) {
 		String escapedContent = content.replace("'", "&#39;");
-		
+
 		return "function FindByAttributeValue(attribute, value, element_type)    {"
 				+ "  element_type = element_type || \"*\";" + "  var All = document.getElementsByTagName(element_type);"
 				+ "  for (var i = 0; i < All.length; i++)       {"
 				+ "    if (All[i].getAttribute(attribute) == value) { return All[i]; }" + "  }" + "}"
 				+ "FindByAttributeValue('aria-label','Message Body','div').innerHTML = '" + escapedContent + "'";
 	}
-	
-	
 
 	public void writeLogSentEmail(String firstName, String email, String logFileName) {
 
@@ -156,7 +157,9 @@ public class MailSender {
 			fw = new FileWriter(file.getAbsoluteFile(), true);
 			bw = new BufferedWriter(fw);
 			bw.newLine();
-			bw.write("FirstName: " + firstName + "-- Email: " + email);
+			Date date = new Date();
+			Timestamp ts = new Timestamp(date.getTime());
+			bw.write(ts + "FirstName: " + firstName + "-- Email: " + email);
 
 		} catch (IOException e) {
 			e.printStackTrace();
