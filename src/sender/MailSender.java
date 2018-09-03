@@ -31,7 +31,7 @@ public class MailSender {
 	private String email = "";
 	private String password = "";
 
-	private String xpathToComposeButton = "//div[text() = 'COMPOSE' and @role = 'button']";
+	private String xpathToComposeButton = "//div[(text() = 'COMPOSE' or text() = 'Compose') and @role = 'button']";
 	private String xpathToComposeDialog = "//div[@class = 'dw']//div[@class = 'nH nn']//div[@class = 'nH Hd' and @role = 'dialog']";
 	private String xpathToRecipientsField = xpathToComposeDialog + "//textarea[@name = 'to']";
 	private String xpathToRecipientsAutocomplete = xpathToComposeDialog
@@ -159,7 +159,7 @@ public class MailSender {
 			bw.newLine();
 			Date date = new Date();
 			Timestamp ts = new Timestamp(date.getTime());
-			bw.write(ts + "FirstName: " + firstName + "-- Email: " + email);
+			bw.write(ts + " - FirstName: " + firstName + " -- Email: " + email);
 
 		} catch (IOException e) {
 			e.printStackTrace();

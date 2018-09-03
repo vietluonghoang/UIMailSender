@@ -11,8 +11,9 @@ import sender.MailSender;
 public class Sender {
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
 
-		String senderEmail = "sgsvn1@gmail.com";
-		String senderPassword = "Play2Win";
+		String senderEmail = "";
+		String targetEmail = "";
+		String senderPassword = "";
 
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
@@ -21,7 +22,6 @@ public class Sender {
 		int interval = 30000;
 
 		String subject = "This is test email";
-//		String subject = "Cheap Outsource Testing Service";
 		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other software. <br><br>"
 				+ "Our team have the ability to perform <b>full range testing</b> on all major mobile devices, web browsers and OSs, including iOS, Android, Windows, Mac, and Linux.<br><br>"
 				+ "Our team is <b>well trained by Silicon Valley testing experts and all are good in English communicating.</b> "
@@ -29,7 +29,7 @@ public class Sender {
 				+ " We have been working with many well-known clients all over the world.<br><br>"
 				+ "With <b>100+ most popular devices</b> in-house, we&#39;re positive to meet any testing demands.<br><br>"
 				+ "To build confidence, we&#39;d be happy to offer you a <b>free trial test phase</b> so you can assess our quality.<br><br>"
-				+ "Please feel free to let me know if you have any questions or would like an in-depth conversation. <br><br>"
+				+ "If you have any questions or would like an in-depth conversation, we're available at: " + targetEmail + "<br><br>"
 				+ "Best Regards,<br>" + "-Tra"
 				+ "<br><br><div class=\"gmail_signature\" data-smartmail=\"gmail_signature\"><div dir=\"ltr\"><div style=\"font-size:12.8px\"><b style=\"font-size:12.8px\">QA Team</b><br></div>"
 				+ "<div style=\"font-size:12.8px\"><b><font color=\"#134f5c\">TradaTesting</font></b></div>"
