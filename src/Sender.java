@@ -17,12 +17,15 @@ public class Sender {
 
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
+		int rangeFrom = 0;
+		int rangeTo = 999;
+		
 		String logFileName = recipientListFileName.replace(".xlsx", "") + "-" + sheetName + ".txt";
 
 		int interval = 30000;
 
 		String subject = "This is test email";
-		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other software. <br><br>"
+		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other softwares. <br><br>"
 				+ "Our team have the ability to perform <b>full range testing</b> on all major mobile devices, web browsers and OSs, including iOS, Android, Windows, Mac, and Linux.<br><br>"
 				+ "Our team is <b>well trained by Silicon Valley testing experts and all are good in English communicating.</b> "
 				+ "With these advantages, we will be sure to provide <b>a top quality testing service</b> with the most <b>competitive cost (from 4.99 US Dollar/hour/tester).</b>"
@@ -57,7 +60,7 @@ public class Sender {
 			sender.loginEmail(senderEmail, senderPassword);
 
 			int counter = 0;
-			ArrayList<Recipient> recipients = excel.getRecipientInfo();
+			ArrayList<Recipient> recipients = excel.getRecipientInfo(rangeFrom, rangeTo);
 			for (Recipient recipient : recipients) {
 
 				try {

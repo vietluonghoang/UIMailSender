@@ -34,7 +34,6 @@ public class WorkingWithExcel {
 	}
 
 	private void dataBinding(String fileName, String sheetName) {
-		// SendColdEmailTest3.xlsx
 		recipientInfo = new HashMap<>();
 		recipients = new ArrayList<>();
 		String excelFile = System.getProperty("user.dir") + "/data/" + fileName;
@@ -62,6 +61,21 @@ public class WorkingWithExcel {
 		return recipients;
 	}
 
+	public ArrayList<Recipient> getRecipientInfo(int rangeFrom, int rangeTo) {
+		int idx = 1;
+		ArrayList<Recipient> re = new ArrayList<>();
+		for (Recipient recipient : recipients) {
+			if(idx >= rangeFrom && idx <= rangeTo) {
+				re.add(recipient);
+			}
+			if(idx > rangeTo) {
+				break;
+			}
+			idx++;
+		}
+		return re;
+	}
+	
 	public JTable getDataTable(String filePath, String sheetName) {
 		try {
 			workbook = new XSSFWorkbook(new FileInputStream(new File(filePath)));
