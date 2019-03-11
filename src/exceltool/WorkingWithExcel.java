@@ -65,7 +65,7 @@ public class WorkingWithExcel {
 		int idx = 1;
 		ArrayList<Recipient> re = new ArrayList<>();
 		for (Recipient recipient : recipients) {
-			if(idx >= rangeFrom && idx <= rangeTo) {
+			if(idx > rangeFrom && idx <= rangeTo) {
 				re.add(recipient);
 			}
 			if(idx > rangeTo) {

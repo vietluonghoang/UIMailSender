@@ -1,28 +1,35 @@
 import java.io.FileNotFoundException;
 import java.sql.Driver;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import entities.Recipient;
 import exceltool.WorkingWithExcel;
 import sender.MailSender;
+import utils.FileUtilities;
 
 public class Sender {
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
 
-		String senderEmail = "";
+		MailSender sender = null;
 		String targetEmail = "";
-		String senderPassword = "";
+		HashMap<String, String> sendersInfo = new HashMap<String, String>();
+		sendersInfo.put("", "");
 
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
-		int rangeFrom = 0;
-		int rangeTo = 999;
-		
-		String logFileName = recipientListFileName.replace(".xlsx", "") + "-" + sheetName + ".txt";
 
+		int range = 100;
 		int interval = 30000;
+		int delay = 86400000;
+		int lastRecipientIndex = 0;
+		boolean isRecipientRemained = true;
+
+		String logFileName = recipientListFileName.replace(".xlsx", "") + "-" + sheetName + ".txt";
+		String configFileName = "tracker.txt";
+		FileUtilities fUtils = new FileUtilities();
 
 		String subject = "This is test email";
 		String content = "I trust all is well. I&#39;m reaching out from TradaTesting. We are a leading services provider for QA &#38; testing for website, app, game and other softwares. <br><br>"
@@ -32,8 +39,8 @@ public class Sender {
 				+ " We have been working with many well-known clients all over the world.<br><br>"
 				+ "With <b>100+ most popular devices</b> in-house, we&#39;re positive to meet any testing demands.<br><br>"
 				+ "To build confidence, we&#39;d be happy to offer you a <b>free trial test phase</b> so you can assess our quality.<br><br>"
-				+ "If you have any questions or would like an in-depth conversation, we're available at: " + targetEmail + "<br><br>"
-				+ "Best Regards,<br>" + "-Tra"
+				+ "If you have any questions or would like an in-depth conversation, we're available at: " + targetEmail
+				+ "<br><br>" + "Best Regards,<br>" + "-Tra"
 				+ "<br><br><div class=\"gmail_signature\" data-smartmail=\"gmail_signature\"><div dir=\"ltr\"><div style=\"font-size:12.8px\"><b style=\"font-size:12.8px\">QA Team</b><br></div>"
 				+ "<div style=\"font-size:12.8px\"><b><font color=\"#134f5c\">TradaTesting</font></b></div>"
 				+ "<div style=\"font-size:12.8px\"><img src=\"https://ci5.googleusercontent.com/proxy/FpGNXk1cd2jMN0_cHerewfY4DnBmdJ4V5U8Jkzh_wwznZQrEl7MV6zIlAKanOSXxiNLEcFLupOLHZEavdWuxzSNtc8YeN1U6sqGQM3L1UDBUvuVSiziRaTGI0G1V4GfMwL0qq4Kjzh5CUy27t6v1XSRnSxxscw75sf3UcQs53Eo7aHHeJv7R_4nBR-liK0CSqnADqexBUpfH4no2hsATQw=s0-d-e1-ft#https://docs.google.com/uc?export=download&amp;id=1Ove2h1rJEjNR3Mtrq4G6PgI65FcRl7UH&amp;revid=0B6g_h3xcq2pTTk5udGZWUTVYRDFuY2tIbnVnejVReDRNTTlRPQ\"><br></div>"
@@ -53,48 +60,65 @@ public class Sender {
 			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
 		}
 
-		MailSender sender = new MailSender(pathToChromeDriverExecutableFile);
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
-		try {
-			sender.loginEmail(senderEmail, senderPassword);
+		while (isRecipientRemained) {
+			try {
+				for (String senderEmail : sendersInfo.keySet()) {
+					sender = new MailSender(pathToChromeDriverExecutableFile);
+					String senderPassword = sendersInfo.get(senderEmail);
+					sender.loginEmail(senderEmail, senderPassword);
+					int rangeFrom = Integer.parseInt(fUtils.readFromFile("data/" + configFileName).trim());
+					int rangeTo = rangeFrom + range;
 
-			int counter = 0;
-			ArrayList<Recipient> recipients = excel.getRecipientInfo(rangeFrom, rangeTo);
-			for (Recipient recipient : recipients) {
-
-				try {
-					sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
-							subject.trim(), content.trim());
-				} catch (Exception e) {
-					// TODO: handle exception
-					sender.captureScreen();
-					if (e.getMessage().contains("reached a limit")) {
-						throw e;
+					int counter = 0;
+					ArrayList<Recipient> recipients = excel.getRecipientInfo(rangeFrom, rangeTo);
+					if (recipients.size() < 1) {
+						isRecipientRemained = false;
+						throw new Exception("Empty recipients list");
 					}
-					System.out.println("==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
-					Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
-					sender.resetBrowser();
-					System.out.println("Retrying......");
-					sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
-							subject.trim(), content.trim());
+					for (Recipient recipient : recipients) {
+
+						try {
+							sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+									subject.trim(), content.trim());
+						} catch (Exception e) {
+							// TODO: handle exception
+							sender.captureScreen();
+							if (e.getMessage().contains("reached a limit")) {
+								throw e;
+							}
+							System.out.println(
+									"==========\n" + e.getMessage() + "\n" + e.getStackTrace() + "\n==========");
+							Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
+							sender.resetBrowser();
+							System.out.println("Retrying......");
+							sender.fillEmail(recipient.getEmailAddress().trim(), recipient.getRecipientName().trim(),
+									subject.trim(), content.trim());
+						}
+						sender.sendMail();
+
+						String logContent = ", FirstName: " + recipient.getRecipientName().trim() + ", Email: "
+								+ recipient.getEmailAddress().trim() + ", Sender: " + senderEmail;
+						sender.writeLogSentEmail(logContent, logFileName);
+
+						counter++;
+						lastRecipientIndex++;
+						System.out.println(counter + ". Sent to: " + recipient.getEmailAddress().trim() + "  - by : " + senderEmail);
+						Thread.sleep(interval);
+					}
+					fUtils.writeToFile("data/" + configFileName, lastRecipientIndex + "", false);
+					sender.quitDriver();
 				}
-				sender.sendMail();
-				sender.writeLogSentEmail(recipient.getRecipientName().trim(), recipient.getEmailAddress().trim(),
-						logFileName);
-
-				counter++;
-				System.out.println(counter + ". Sent: " + recipient.getEmailAddress().trim());
-				Thread.sleep(interval);
+				System.out.println("======= All done =======");
+				Thread.sleep(delay);
+			} catch (Exception e) {
+				// TODO: handle exception
+				fUtils.writeToFile("data/" + configFileName, lastRecipientIndex + "", false);
+				System.out.println(e.getMessage() + "\n" + e.getStackTrace());
+				Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, e);
 			}
-			System.out.println("======= All done =======");
-			sender.quitDriver();
-
-		} catch (Exception e) {
-			// TODO: handle exception
-			System.out.println(e.getMessage() + "\n" + e.getStackTrace());
-			Logger.getLogger(Sender.class.getName()).log(Level.SEVERE, null, e);
-//			sender.quitDriver();
 		}
+		sender.quitDriver();
 	}
 }

@@ -23,6 +23,7 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import exceltool.WorkingWithExcel;
+import utils.FileUtilities;
 
 public class MailSender {
 	private WebDriver driver = null;
@@ -139,45 +140,14 @@ public class MailSender {
 				+ "FindByAttributeValue('aria-label','Message Body','div').innerHTML = '" + escapedContent + "'";
 	}
 
-	public void writeLogSentEmail(String firstName, String email, String logFileName) {
+	public void writeLogSentEmail(String content, String logFileName) {
 
-		String logFile = System.getProperty("user.dir") + "/data/Log/" + logFileName;
-
-		BufferedWriter bw = null;
-		FileWriter fw = null;
-
-		try {
-			File file = new File(logFile);
-
-			// if file doesnt exists then create it
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-
-			fw = new FileWriter(file.getAbsoluteFile(), true);
-			bw = new BufferedWriter(fw);
-			bw.newLine();
-			Date date = new Date();
-			Timestamp ts = new Timestamp(date.getTime());
-			bw.write(ts + " - FirstName: " + firstName + " -- Email: " + email);
-
-		} catch (IOException e) {
-			e.printStackTrace();
-			Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, e);
-		} finally {
-			try {
-				if (bw != null) {
-					bw.close();
-				}
-				if (fw != null) {
-					fw.close();
-				}
-			} catch (IOException ex) {
-				ex.printStackTrace();
-				Logger.getLogger(MailSender.class.getName()).log(Level.SEVERE, null, ex);
-			}
-		}
-
+		String logFile = "data/Log/" + logFileName;
+		Date date = new Date();
+		Timestamp ts = new Timestamp(date.getTime());
+		
+		FileUtilities fUtil = new FileUtilities();
+		fUtil.writeToFile(logFile, ts + content, true);
 	}
 
 	public String captureScreen() {
