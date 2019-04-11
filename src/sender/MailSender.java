@@ -104,7 +104,7 @@ public class MailSender {
 				.click();
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type = 'password']")));
 		driver.findElement(By.xpath("//input [@type = 'password']")).sendKeys(password);
-		driver.findElement(By.xpath("//div[@id='passwordNext']")).click();
+		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='passwordNext' or @id = 'signIn')]")).click();
 
 		for (WebElement tryNewPopup : driver.findElements(By.xpath(xpathToTryNewEmailPopup))) {
 			System.out.println("Try New Popup found!!");

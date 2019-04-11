@@ -40,11 +40,13 @@ public class WorkingWithExcel {
 
 		// contains all excel data in table
 		JTable dataTable = getDataTable(excelFile, sheetName);
+		int recipientIndex = 0;
 		for (int index = 0; index < dataTable.getRowCount(); index++) {
 			String firstName = getValue("First Name", index, dataTable);
 			String email = getValue("Email Address", index, dataTable);
 			if(!isEmailExisted(email)) {
-				recipients.add(new Recipient(email, firstName));
+				recipientIndex ++;
+				recipients.add(new Recipient(recipientIndex,email, firstName));
 				recipientInfo.put(email, firstName);
 			}
 		}
@@ -62,16 +64,14 @@ public class WorkingWithExcel {
 	}
 
 	public ArrayList<Recipient> getRecipientInfo(int rangeFrom, int rangeTo) {
-		int idx = 1;
 		ArrayList<Recipient> re = new ArrayList<>();
 		for (Recipient recipient : recipients) {
-			if(idx > rangeFrom && idx <= rangeTo) {
+			if(recipient.getIndex() > rangeFrom && recipient.getIndex() <= rangeTo) {
 				re.add(recipient);
 			}
-			if(idx > rangeTo) {
+			if(re.size() > rangeTo) {
 				break;
 			}
-			idx++;
 		}
 		return re;
 	}
