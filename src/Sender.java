@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -14,18 +15,76 @@ import utils.FileUtilities;
 
 public class Sender {
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
-
-		MailSender sender = null;
-		String targetEmail = "";
 		HashMap<String, HashMap<String, Object>> sendersInfo = new HashMap<String, HashMap<String, Object>>();
 		initSender(sendersInfo);
+		
+		System.out.print("Pick an action:\n\t1. Send Emails\n\t2. Collect invalid emails\n\nSelect: ");
+		Scanner scanner = new Scanner(System.in);
+		String input = scanner.nextLine();
+		
+		switch (input.toLowerCase().trim()) {
+		case "1":
+			sendEmail(sendersInfo);
+			break;
+		case "2":
+			collectInvalidEmail(sendersInfo);
+			break;
 
+		default:
+			break;
+		}
+	}
+
+	private static void collectInvalidEmail(HashMap<String, HashMap<String, Object>> sendersInfo) {
+		MailSender sender = null;
+		String logFileName = "invalidEmail.txt";
+		String pathToChromeDriverExecutableFile = getDriverPath();
+		Queue<String> senders = new LinkedList<String>();
+
+		for (String senderEmail : sendersInfo.keySet()) {
+			senders.add(senderEmail);
+		}
+
+		try {
+			while (!senders.isEmpty()) {
+				String senderEmail = senders.poll();
+				sender = new MailSender(pathToChromeDriverExecutableFile);
+				String senderPassword = (String) sendersInfo.get(senderEmail).get("pwd");
+				sender.loginEmail(senderEmail, senderPassword);
+				String pathToWrongEmailFolder = "https://mail.google.com/mail/u/0/#label/Wrong+address";
+				int pageNumber = 1;
+				if (sender.isConversationAvailable()) {
+					boolean isContinue = true;
+					while (isContinue) {
+						sender.navigateTo(pathToWrongEmailFolder + "/p" + pageNumber);
+						
+						if (sender.isConversationAvailable()) {
+							pageNumber++;
+						}else {
+							isContinue = false;
+						}
+					}
+				}
+				
+				String invalidEmail = "";
+				String logContent = invalidEmail;
+				sender.writeLogSentEmail(logContent, logFileName);
+
+			}
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+
+	private static void sendEmail(HashMap<String, HashMap<String, Object>> sendersInfo) {
+		MailSender sender = null;
+		String targetEmail = "";
 		String recipientListFileName = "SendColdEmailTest3.xlsx";
 		String sheetName = "SendColdEmail";
 
-		int range = 2;
-		int interval = 30000;
-		int delay = 120000;
+		int range = 2; // number of recipients sent at a time
+		int interval = 30000; // interval between sends
+		int delay = 120000; // delay between rounds of sends
 		int lastRecipientIndex = 0;
 		boolean isRecipientRemained = true;
 		String logFileName = recipientListFileName.replace(".xlsx", "") + "-" + sheetName + ".txt";
@@ -56,11 +115,7 @@ public class Sender {
 				+ "If you have any questions or would like an in-depth conversation, we're available at: " + targetEmail
 				+ "<br><br>" + "Best Regards," + signature;
 
-		String pathToChromeDriverExecutableFile = "./drivers/chromedriver";
-
-		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
-			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
-		}
+		String pathToChromeDriverExecutableFile = getDriverPath();
 
 		WorkingWithExcel excel = new WorkingWithExcel(recipientListFileName, sheetName);
 
@@ -154,7 +209,7 @@ public class Sender {
 							System.out.print("======= \nWriting last recipient index........" + lastRecipientIndex);
 							fUtils.writeToFile("data/" + configFileName, lastRecipientIndex + "", false);
 							System.out.println("... done \n=======");
-							sendersInfo.get(senderEmail).put("sentCount",counter);
+							sendersInfo.get(senderEmail).put("sentCount", counter);
 							System.out.println(counter + ". Sent to: " + recipient.getEmailAddress().trim()
 									+ "  - by : " + senderEmail);
 							Thread.sleep(interval);
@@ -181,5 +236,15 @@ public class Sender {
 		sendersInfo.put("a@gmail.com", new HashMap<String, Object>());
 		sendersInfo.get("a@gmail.com").put("pwd", "");
 		sendersInfo.get("a@gmail.com").put("sentCount", 0);
+	}
+
+	private static String getDriverPath() {
+		String pathToChromeDriverExecutableFile = "./drivers/chromedriver";
+
+		if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) {
+			pathToChromeDriverExecutableFile = "./drivers/chromedriver.exe";
+		}
+
+		return pathToChromeDriverExecutableFile;
 	}
 }

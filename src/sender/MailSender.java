@@ -6,6 +6,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -44,6 +45,7 @@ public class MailSender {
 	private String xpathToTryNewEmailPopupCloseButton = "//body/div/div/div/button[@aria-label = 'Close']";
 	private String xpathToErrorPopup = "//div[@role = 'alertdialog']";
 	private String xpathToErrorPopupHeader = xpathToErrorPopup + "/div/span[text() = 'Error' and @role = 'heading']";
+	private String xpathToNoConversationAvailableMessage = "//table/tbody/tr";
 
 	public MailSender(String pathToChromeDriverExecutableFile) {
 		this.pathToChromeDriverExecutableFile = pathToChromeDriverExecutableFile;
@@ -97,7 +99,7 @@ public class MailSender {
 		this.email = email;
 		this.password = password;
 
-		driver.navigate().to("https://mail.google.com/");
+		navigateTo("https://mail.google.com/");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type='email']")));
 		driver.findElement(By.xpath("//input [@type='email']")).sendKeys(email);
 		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='identifierNext' or @id = 'next')]"))
@@ -118,6 +120,22 @@ public class MailSender {
 		driver.findElement(By.xpath(xpathToSendButton)).click();
 	}
 
+	public boolean isConversationAvailable() {
+		for (WebElement element : driver.findElements(By.xpath(xpathToNoConversationAvailableMessage))) {
+			if (element.findElements(By.xpath("./")).size() < 2) {
+				if (element.getText().contains("There are no conversations with this label.")) {
+					return false;
+				}
+			}
+		} 
+		return true;
+	}
+	
+	public void navigateTo(String url) {
+		// TODO Auto-generated method stub
+		driver.navigate().to(url);
+	}
+	
 	public void quitDriver() {
 		driver.quit();
 	}
