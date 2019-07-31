@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -45,7 +46,11 @@ public class MailSender {
 	private String xpathToTryNewEmailPopupCloseButton = "//body/div/div/div/button[@aria-label = 'Close']";
 	private String xpathToErrorPopup = "//div[@role = 'alertdialog']";
 	private String xpathToErrorPopupHeader = xpathToErrorPopup + "/div/span[text() = 'Error' and @role = 'heading']";
-	private String xpathToNoConversationAvailableMessage = "//table/tbody/tr";
+	private String xpathToNoConversationAvailableMessage = "//div[@role = 'main']//table/tbody/tr";
+	private String xpathToMessageId = "/td/div[@role = 'link']//span[@class = 'bog']/span";
+	private String xpathToMessageThreadList = "//table[@role = 'presentation']//div[@role = 'list']";
+	private String xpathToMessageInAThread = "//div[@role = 'listitem']";
+	private String xpathToRecipientInfoSection = "//table[@role = 'presentation']//div[@role = 'list']//div[@role = 'listitem']//table/tbody/tr/td/table/tbody//span[text() = 'to ']/span[@name != 'me']";
 
 	public MailSender(String pathToChromeDriverExecutableFile) {
 		this.pathToChromeDriverExecutableFile = pathToChromeDriverExecutableFile;
@@ -106,8 +111,20 @@ public class MailSender {
 				.click();
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//input [@type = 'password']")));
 		driver.findElement(By.xpath("//input [@type = 'password']")).sendKeys(password);
-		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='passwordNext' or @id = 'signIn')]")).click();
-
+		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='passwordNext' or @id = 'signIn')]"))
+				.click();
+		
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		System.out.println("----Opening inbox -----");
+		navigateTo("https://mail.google.com/mail/u/0/#inbox");
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
+		
 		for (WebElement tryNewPopup : driver.findElements(By.xpath(xpathToTryNewEmailPopup))) {
 			System.out.println("Try New Popup found!!");
 			driver.findElement(By.xpath(xpathToTryNewEmailPopupCloseButton)).click();
@@ -121,21 +138,57 @@ public class MailSender {
 	}
 
 	public boolean isConversationAvailable() {
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		for (WebElement element : driver.findElements(By.xpath(xpathToNoConversationAvailableMessage))) {
-			if (element.findElements(By.xpath("./")).size() < 2) {
-				if (element.getText().contains("There are no conversations with this label.")) {
-					return false;
-				}
+			if (element.getText().contains("There are no conversations with this label.")) {
+				System.out.println("-----Done with FALSE -----");
+				return false;
 			}
-		} 
+
+		}
+		System.out.println("-----Done with TRUE -----");
 		return true;
 	}
+
+	public ArrayList<String> getMessageIds() {
+		ArrayList<String> messageIds = new ArrayList<>();
+		for (WebElement element : driver
+				.findElements(By.xpath(xpathToNoConversationAvailableMessage + xpathToMessageId))) {
+			String threadId = element.getAttribute("data-legacy-thread-id");
+			String messageId = element.getAttribute("data-legacy-last-message-id");
+			messageIds.add(messageId);
+		}
+		return messageIds;
+	}
 	
+	public String getRecipientEmail(String url) {
+		String email = "";
+		System.out.println("======== Opening email thread......");
+		navigateTo(url);
+		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToMessageThreadList)));
+		for(WebElement item:driver.findElements(By.xpath(xpathToMessageInAThread))) {
+			item.click();
+			for(WebElement info:driver.findElements(By.xpath(xpathToRecipientInfoSection))) {
+				email = info.getAttribute("email").trim();
+			}
+			if(!"".equals(email)) {
+				break;
+			}
+		}	
+		return email;	
+	}
+
 	public void navigateTo(String url) {
 		// TODO Auto-generated method stub
 		driver.navigate().to(url);
 	}
-	
+
 	public void quitDriver() {
 		driver.quit();
 	}
@@ -163,7 +216,7 @@ public class MailSender {
 		String logFile = "data/Log/" + logFileName;
 		Date date = new Date();
 		Timestamp ts = new Timestamp(date.getTime());
-		
+
 		FileUtilities fUtil = new FileUtilities();
 		fUtil.writeToFile(logFile, ts + content, true);
 	}

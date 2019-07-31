@@ -17,11 +17,11 @@ public class Sender {
 	public static void main(String[] args) throws InterruptedException, FileNotFoundException {
 		HashMap<String, HashMap<String, Object>> sendersInfo = new HashMap<String, HashMap<String, Object>>();
 		initSender(sendersInfo);
-		
+
 		System.out.print("Pick an action:\n\t1. Send Emails\n\t2. Collect invalid emails\n\nSelect: ");
 		Scanner scanner = new Scanner(System.in);
 		String input = scanner.nextLine();
-		
+
 		switch (input.toLowerCase().trim()) {
 		case "1":
 			sendEmail(sendersInfo);
@@ -53,26 +53,62 @@ public class Sender {
 				sender.loginEmail(senderEmail, senderPassword);
 				String pathToWrongEmailFolder = "https://mail.google.com/mail/u/0/#label/Wrong+address";
 				int pageNumber = 1;
+				String invalidEmail = "";
+				ArrayList<String> emailThreadsUrl = new ArrayList<>();
+				sender.navigateTo(pathToWrongEmailFolder);
+
 				if (sender.isConversationAvailable()) {
 					boolean isContinue = true;
 					while (isContinue) {
+						System.out.println("-----opening page " + pageNumber + "-----");
 						sender.navigateTo(pathToWrongEmailFolder + "/p" + pageNumber);
-						
+
 						if (sender.isConversationAvailable()) {
 							pageNumber++;
-						}else {
+							System.out.println(sender.getMessageIds().size());
+							for (String id : sender.getMessageIds()) {
+								emailThreadsUrl.add(pathToWrongEmailFolder + "/" + id);
+							}
+						} else {
 							isContinue = false;
 						}
 					}
 				}
-				
-				String invalidEmail = "";
+				System.out.println("-----No more available pages for '" + senderEmail + "' after " + (pageNumber - 1)
+						+ " pages-----");
+
+				String lastEmail = "";
+				for (String url : emailThreadsUrl) {
+					int retries = 5;
+					String email = "";
+					while (retries > 0) {
+						System.out.println("\n== Opening: " + url);
+						email = sender.getRecipientEmail(url);
+						System.out.println("== Got: " + email);
+						if (lastEmail.equals(email)) {
+							System.out.println("---Same emails: " + email + " - " + lastEmail);
+							retries--;
+							Thread.sleep(5000);
+							if (retries < 3) {
+								sender.resetBrowser();
+							}
+						} else {
+							lastEmail = email;
+							break;
+						}
+					}
+
+					invalidEmail += ", " + url + ", " + email + "\n";
+				}
+
 				String logContent = invalidEmail;
 				sender.writeLogSentEmail(logContent, logFileName);
-
+				System.out.println("\n========== Done ==========");
+//				sender.quitDriver();
 			}
 		} catch (Exception e) {
 			// TODO: handle exception
+			System.out.println("-----ERROR-----\n" + e + "\n-----------");
 		}
 	}
 
@@ -233,9 +269,9 @@ public class Sender {
 	}
 
 	private static void initSender(HashMap<String, HashMap<String, Object>> sendersInfo) {
-		sendersInfo.put("a@gmail.com", new HashMap<String, Object>());
-		sendersInfo.get("a@gmail.com").put("pwd", "");
-		sendersInfo.get("a@gmail.com").put("sentCount", 0);
+		sendersInfo.put("email", new HashMap<String, Object>());
+		sendersInfo.get("email").put("pwd", "password");
+		sendersInfo.get("email").put("sentCount", 0);
 	}
 
 	private static String getDriverPath() {
