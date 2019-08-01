@@ -98,7 +98,7 @@ public class Sender {
 						}
 					}
 
-					invalidEmail += ", " + url + ", " + email + "\n";
+					invalidEmail += ", " + senderEmail + ", " + url + ", " + email + "\n";
 				}
 
 				String logContent = invalidEmail;
