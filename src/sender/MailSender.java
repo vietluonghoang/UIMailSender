@@ -113,18 +113,18 @@ public class MailSender {
 		driver.findElement(By.xpath("//input [@type = 'password']")).sendKeys(password);
 		driver.findElement(By.xpath("//*[(self::div or self::input) and (@id='passwordNext' or @id = 'signIn')]"))
 				.click();
-		
+
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		System.out.println("----Opening inbox -----");
 		navigateTo("https://mail.google.com/mail/u/0/#inbox");
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToComposeButton)));
-		
+
 		for (WebElement tryNewPopup : driver.findElements(By.xpath(xpathToTryNewEmailPopup))) {
 			System.out.println("Try New Popup found!!");
 			driver.findElement(By.xpath(xpathToTryNewEmailPopupCloseButton)).click();
@@ -166,22 +166,25 @@ public class MailSender {
 		}
 		return messageIds;
 	}
-	
+
 	public String getRecipientEmail(String url) {
 		String email = "";
 		System.out.println("======== Opening email thread......");
 		navigateTo(url);
 		wait.until(ExpectedConditions.elementToBeClickable(By.xpath(xpathToMessageThreadList)));
-		for(WebElement item:driver.findElements(By.xpath(xpathToMessageInAThread))) {
+		for (WebElement item : driver.findElements(By.xpath(xpathToMessageInAThread))) {
+			if (driver.findElements(By.xpath("//img[@aria-label = 'Save & close']")).size() > 0) {
+				driver.findElement(By.xpath("//img[@aria-label = 'Save & close']")).click();
+			}
 			item.click();
-			for(WebElement info:driver.findElements(By.xpath(xpathToRecipientInfoSection))) {
+			for (WebElement info : driver.findElements(By.xpath(xpathToRecipientInfoSection))) {
 				email = info.getAttribute("email").trim();
 			}
-			if(!"".equals(email)) {
+			if (!"".equals(email)) {
 				break;
 			}
-		}	
-		return email;	
+		}
+		return email;
 	}
 
 	public void navigateTo(String url) {
